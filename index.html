@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Michel & Allegria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<style>
+  :root{
+    --paper:#F4F4F4;
+    --white:#FFFFFF;
+    --ink:#111111;
+    --ink-soft:#4A4A4A;
+    --line:#D8D8D8;
+    --page-bg:#E7E7E5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page-bg);
+    color:var(--ink);
+    font-family:'Poppins',Arial,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:clamp(1rem,4vw,3rem) clamp(.75rem,3vw,2rem);
+  }
+  .card{
+    width:100%;
+    max-width:640px;
+    background:var(--white);
+    box-shadow:0 30px 70px -25px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .art{display:block;width:100%;height:auto;}
+  .name-wrap{position:relative;width:100%;container-type:inline-size;}
+  .name-mask{position:absolute;left:10%;top:31.2%;width:80%;height:7.4%;background:var(--paper);}
+  .guest-name{
+    position:absolute;left:50%;top:34.9%;width:78%;
+    transform:translate(-50%,-50%);text-align:center;
+    font-family:'Poppins',Arial,sans-serif;font-weight:400;font-size:3.7cqw;
+    line-height:1.15;letter-spacing:.01em;color:var(--ink);text-transform:uppercase;margin:0;
+  }
+  .date-mask{position:absolute;left:26%;top:52.8%;width:48%;height:8.8%;background:var(--paper);}
+  .date-row{
+    position:absolute;left:50%;top:57.3%;transform:translate(-50%,-50%);
+    display:flex;align-items:center;gap:1.4cqw;white-space:nowrap;
+  }
+  .date-row .month, .date-row .year{
+    font-family:'Poppins',Arial,sans-serif;font-weight:300;font-size:5.4cqw;color:var(--ink);text-transform:uppercase;
+  }
+  .date-row .day{background:#000;color:#fff;font-weight:600;font-size:5.6cqw;line-height:1;padding:.5cqw 1.3cqw;}
+  .time-mask{position:absolute;left:22%;top:66.3%;width:56%;height:3.2%;background:var(--paper);}
+  .time-row{
+    position:absolute;left:50%;top:67.9%;transform:translate(-50%,-50%);white-space:nowrap;
+    font-family:'Poppins',Arial,sans-serif;font-size:2.35cqw;color:var(--ink);text-transform:uppercase;
+  }
+  .time-row .hour{font-weight:700;}
+  .time-row .sep{color:var(--ink);margin:0 .5em;font-weight:300;}
+  .time-row .kind{font-weight:400;letter-spacing:.02em;}
+
+  .eyebrow{
+    font-size:.7rem;font-weight:500;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 1.1rem;
+  }
+
+  .qr-block{background:var(--white);border-top:1px solid var(--line);text-align:center;padding:clamp(2.2rem,7vw,3.2rem) clamp(1.4rem,6vw,2.6rem);}
+  .qr-frame{
+    position:relative;width:min(58%,220px);margin:0 auto 1.8rem;aspect-ratio:1/1;
+    display:flex;align-items:center;justify-content:center;padding:1.1rem;
+  }
+  .qr-frame .corner{position:absolute;width:20px;height:20px;border:1.4px solid #B9B9B9;}
+  .qr-frame .c-tl{top:0;left:0;border-right:none;border-bottom:none;}
+  .qr-frame .c-tr{top:0;right:0;border-left:none;border-bottom:none;}
+  .qr-frame .c-bl{bottom:0;left:0;border-right:none;border-top:none;}
+  .qr-frame .c-br{bottom:0;right:0;border-left:none;border-top:none;}
+  #qrcode{width:100%;height:100%;}
+  #qrcode img{width:100% !important;height:100% !important;}
+  .qr-copy{max-width:30ch;margin:0 auto;font-size:.92rem;line-height:1.7;color:var(--ink-soft);}
+  .qr-copy + .qr-copy{margin-top:1.1rem;}
+  .qr-copy strong{color:var(--ink);font-weight:500;}
+
+  .rsvp-block{
+    position:relative;background:var(--white);border-top:1px solid var(--line);
+    overflow:hidden;text-align:center;padding:clamp(2.2rem,7vw,3.2rem) clamp(1.4rem,6vw,2.6rem);
+  }
+  .rsvp-watermark{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-size:min(42vw,280px);
+    color:#000;opacity:.035;pointer-events:none;user-select:none;white-space:nowrap;
+  }
+  .rsvp-title{position:relative;font-size:clamp(1.5rem,5vw,1.9rem);font-weight:600;letter-spacing:.01em;margin:0 0 .5rem;}
+  .rsvp-for{position:relative;font-size:.85rem;color:var(--ink-soft);margin:0 0 2.2rem;}
+  .rsvp-for span{color:var(--ink);font-weight:500;}
+  .rsvp-buttons{position:relative;display:flex;flex-direction:column;gap:.85rem;max-width:400px;margin:0 auto;}
+  .rsvp-btn{
+    font-family:'Poppins',Arial,sans-serif;font-size:.92rem;font-weight:500;padding:1rem 1.2rem;
+    border-radius:999px;cursor:pointer;transition:opacity .15s ease, transform .15s ease;border:1.4px solid var(--ink);
+  }
+  .rsvp-btn:hover{transform:translateY(-1px);}
+  .rsvp-btn.primary{background:var(--ink);color:var(--white);}
+  .rsvp-btn.secondary{background:var(--white);color:var(--ink);}
+  .rsvp-btn.tertiary{background:var(--paper);color:var(--ink);border-color:var(--paper);}
+  .rsvp-btn[disabled]{opacity:.35;cursor:default;transform:none;}
+  .rsvp-btn.chosen{opacity:1;outline:2px solid var(--ink);outline-offset:2px;}
+  .rsvp-status{position:relative;margin-top:1.6rem;font-size:.88rem;color:var(--ink-soft);min-height:1.2em;}
+  .footer-note{position:relative;margin-top:2.6rem;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft);}
+
+  .pdf-bar{max-width:640px;margin:0 auto 1rem;text-align:center;display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;}
+  .pdf-btn, .admin-link{
+    font-family:'Poppins',Arial,sans-serif;font-size:.82rem;font-weight:500;padding:.7rem 1.4rem;
+    border-radius:999px;border:1.4px solid var(--ink);background:var(--white);color:var(--ink);cursor:pointer;text-decoration:none;
+  }
+
+  @media print{
+    body{background:#fff !important;padding:0 !important;display:block;}
+    .pdf-bar{display:none !important;}
+    .card{box-shadow:none;max-width:100%;}
+    .qr-block, .rsvp-block{border-top:none;}
+    .rsvp-buttons, .rsvp-status{display:none !important;}
+    .rsvp-for::after{
+      content:"Merci de confirmer votre présence via le lien de cette invitation.";
+      display:block;margin-top:1rem;font-size:.8rem;color:var(--ink-soft);
+    }
+    section.qr-block, section.rsvp-block{break-inside:avoid;}
+  }
+
+  @media (prefers-reduced-motion:reduce){ .rsvp-btn{transition:none;} }
+</style>
+</head>
+<body>
+
+<div class="pdf-bar">
+  <button class="pdf-btn" id="pdfBtn">Télécharger en PDF</button>
+  <a class="admin-link" href="admin.html">Espace organisateur</a>
+</div>
+
+<div class="card">
+
+  <img class="art" src="assets/page1.jpg" alt="Michel et Allegria">
+
+  <div class="name-wrap">
+    <img class="art" src="assets/page2.jpg" alt="Save the date">
+    <div class="name-mask"></div>
+    <p class="guest-name" id="guestName">Cher invité</p>
+
+    <div class="date-mask"></div>
+    <div class="date-row">
+      <span class="month" id="dateMonth">Oct.</span>
+      <span class="day" id="dateDay">01</span>
+      <span class="year" id="dateYear">2026</span>
+    </div>
+
+    <div class="time-mask"></div>
+    <div class="time-row">
+      <span class="hour" id="timeHour">20H00</span>
+      <span class="sep">|</span>
+      <span class="kind" id="timeKind">Soirée dansante</span>
+    </div>
+  </div>
+
+  <img class="art" src="assets/page3.jpg" alt="Mathieu 19:6">
+  <img class="art" src="assets/page4.jpg" alt="Programme">
+
+  <section class="qr-block">
+    <p class="eyebrow">Votre entrée</p>
+    <div class="qr-frame">
+      <span class="corner c-tl"></span><span class="corner c-tr"></span>
+      <span class="corner c-bl"></span><span class="corner c-br"></span>
+      <div id="qrcode"></div>
+    </div>
+    <p class="qr-copy">Ce <strong>code QR</strong> est à présenter au responsable du protocole avant d'entrer dans la salle.</p>
+    <p class="qr-copy">Votre ponctualité sera une preuve d'amour que nous chérirons.</p>
+  </section>
+
+  <section class="rsvp-block">
+    <div class="rsvp-watermark">AM</div>
+    <h2 class="rsvp-title">Confirmez votre présence</h2>
+    <p class="rsvp-for">Invitation adressée à <span id="rsvpFor">Cher invité</span></p>
+
+    <div class="rsvp-buttons" id="rsvpButtons">
+      <button class="rsvp-btn primary" data-status="confirme">Je confirme ma présence</button>
+      <button class="rsvp-btn secondary" data-status="decline">Je ne pourrai pas répondre présent</button>
+      <button class="rsvp-btn tertiary" data-status="plus_tard">Je vais confirmer plus tard</button>
+    </div>
+    <p class="rsvp-status" id="rsvpStatus"></p>
+
+    <p class="footer-note">Cordiale bienvenue</p>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  const EVENT = { month: 'Oct.', day: '01', year: '2026', hour: '20H00', kind: 'Soirée dansante' };
+  document.getElementById('dateMonth').textContent = EVENT.month;
+  document.getElementById('dateDay').textContent = EVENT.day;
+  document.getElementById('dateYear').textContent = EVENT.year;
+  document.getElementById('timeHour').textContent = EVENT.hour;
+  document.getElementById('timeKind').textContent = EVENT.kind;
+
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('g') || 'demo';
+
+  const guestNameEl = document.getElementById('guestName');
+  const rsvpForEl = document.getElementById('rsvpFor');
+  const statusEl = document.getElementById('rsvpStatus');
+  const buttonsEl = document.getElementById('rsvpButtons');
+
+  const sb = (window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+    ? supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+    : null;
+
+  function renderGuest(nom, statut){
+    const display = nom || 'Cher invité';
+    guestNameEl.textContent = display;
+    rsvpForEl.textContent = display;
+    if (statut && statut !== 'en_attente'){ reflectStatus(statut); }
+  }
+
+  function reflectStatus(statut){
+    Array.from(buttonsEl.children).forEach(btn => {
+      btn.disabled = true;
+      btn.classList.toggle('chosen', btn.dataset.status === statut);
+    });
+    const labels = {
+      confirme: 'Merci ! Votre présence est confirmée.',
+      decline: "Merci de nous avoir répondu — vous nous manquerez.",
+      plus_tard: 'Merci — vous pourrez confirmer plus tard via ce même lien.'
+    };
+    statusEl.textContent = labels[statut] || '';
+  }
+
+  async function init(){
+    if (!sb){
+      renderGuest(null, null);
+      statusEl.textContent = "La confirmation en ligne n'est pas disponible pour le moment.";
+      Array.from(buttonsEl.children).forEach(btn => btn.disabled = true);
+      return;
+    }
+    const { data, error } = await sb.from('guests').select('*').eq('code', code).maybeSingle();
+    if (error || !data){ renderGuest(null, null); return; }
+    renderGuest(data.nom, data.statut);
+  }
+
+  buttonsEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.rsvp-btn');
+    if (!btn || btn.disabled || !sb) return;
+    const statut = btn.dataset.status;
+    reflectStatus(statut);
+    const { error } = await sb.from('guests').update({ statut, date_reponse: new Date().toISOString() }).eq('code', code);
+    if (error){ statusEl.textContent = "Votre réponse n'a pas pu être enregistrée, réessayez."; }
+  });
+
+  if (typeof QRCode !== 'undefined'){
+    new QRCode(document.getElementById('qrcode'), {
+      text: window.location.href, width: 512, height: 512,
+      colorDark: '#111111', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  document.getElementById('pdfBtn').addEventListener('click', () => window.print());
+
+  init();
+})();
+</script>
+</body>
+</html>
