@@ -38,30 +38,13 @@
   }
   .art{display:block;width:100%;height:auto;}
   .name-wrap{position:relative;width:100%;container-type:inline-size;}
-  .name-mask{position:absolute;left:10%;top:31.2%;width:80%;height:7.4%;background:var(--paper);}
+  .name-mask{position:absolute;left:10%;top:31.2%;width:80%;height:7.4%;background:#F4F4F4;}
   .guest-name{
     position:absolute;left:50%;top:34.9%;width:78%;
     transform:translate(-50%,-50%);text-align:center;
     font-family:'Poppins',Arial,sans-serif;font-weight:400;font-size:3.7cqw;
     line-height:1.15;letter-spacing:.01em;color:var(--ink);text-transform:uppercase;margin:0;
   }
-  .date-mask{position:absolute;left:26%;top:52.8%;width:48%;height:8.8%;background:var(--paper);}
-  .date-row{
-    position:absolute;left:50%;top:57.3%;transform:translate(-50%,-50%);
-    display:flex;align-items:center;gap:1.4cqw;white-space:nowrap;
-  }
-  .date-row .month, .date-row .year{
-    font-family:'Poppins',Arial,sans-serif;font-weight:300;font-size:5.4cqw;color:var(--ink);text-transform:uppercase;
-  }
-  .date-row .day{background:#000;color:#fff;font-weight:600;font-size:5.6cqw;line-height:1;padding:.5cqw 1.3cqw;}
-  .time-mask{position:absolute;left:22%;top:66.3%;width:56%;height:3.2%;background:var(--paper);}
-  .time-row{
-    position:absolute;left:50%;top:67.9%;transform:translate(-50%,-50%);white-space:nowrap;
-    font-family:'Poppins',Arial,sans-serif;font-size:2.35cqw;color:var(--ink);text-transform:uppercase;
-  }
-  .time-row .hour{font-weight:700;}
-  .time-row .sep{color:var(--ink);margin:0 .5em;font-weight:300;}
-  .time-row .kind{font-weight:400;letter-spacing:.02em;}
 
   .eyebrow{
     font-size:.7rem;font-weight:500;letter-spacing:.28em;text-transform:uppercase;
@@ -147,20 +130,6 @@
     <img class="art" src="assets/page2.jpg" alt="Save the date">
     <div class="name-mask"></div>
     <p class="guest-name" id="guestName">Cher invité</p>
-
-    <div class="date-mask"></div>
-    <div class="date-row">
-      <span class="month" id="dateMonth">Oct.</span>
-      <span class="day" id="dateDay">01</span>
-      <span class="year" id="dateYear">2026</span>
-    </div>
-
-    <div class="time-mask"></div>
-    <div class="time-row">
-      <span class="hour" id="timeHour">20H00</span>
-      <span class="sep">|</span>
-      <span class="kind" id="timeKind">Soirée dansante</span>
-    </div>
   </div>
 
   <img class="art" src="assets/page3.jpg" alt="Mathieu 19:6">
@@ -196,13 +165,6 @@
 
 <script>
 (function(){
-  const EVENT = { month: 'Oct.', day: '01', year: '2026', hour: '20H00', kind: 'Soirée dansante' };
-  document.getElementById('dateMonth').textContent = EVENT.month;
-  document.getElementById('dateDay').textContent = EVENT.day;
-  document.getElementById('dateYear').textContent = EVENT.year;
-  document.getElementById('timeHour').textContent = EVENT.hour;
-  document.getElementById('timeKind').textContent = EVENT.kind;
-
   const params = new URLSearchParams(window.location.search);
   const code = params.get('g') || 'demo';
 
