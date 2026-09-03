@@ -93,10 +93,25 @@
   .rsvp-status{position:relative;margin-top:1.6rem;font-size:.88rem;color:var(--ink-soft);min-height:1.2em;}
   .footer-note{position:relative;margin-top:2.6rem;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft);}
 
-  .pdf-bar{max-width:640px;margin:0 auto 1rem;text-align:center;display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;}
+  .pdf-bar{
+    max-width:640px;margin:0 auto 1rem;text-align:center;
+    display:flex;gap:.6rem;justify-content:center;flex-wrap:nowrap;
+  }
   .pdf-btn, .admin-link{
+    flex:0 1 auto;
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
     font-family:'Poppins',Arial,sans-serif;font-size:.82rem;font-weight:500;padding:.7rem 1.4rem;
     border-radius:999px;border:1.4px solid var(--ink);background:var(--white);color:var(--ink);cursor:pointer;text-decoration:none;
+  }
+  @media (max-width:420px){
+    .pdf-bar{gap:.4rem;padding:0 .25rem;}
+    .pdf-btn, .admin-link{font-size:.68rem;padding:.6rem .7rem;}
+  }
+  @media (max-width:340px){
+    .pdf-btn, .admin-link{font-size:.62rem;padding:.55rem .5rem;}
   }
 
   @media print{
@@ -104,11 +119,7 @@
     .pdf-bar{display:none !important;}
     .card{box-shadow:none;max-width:100%;}
     .qr-block, .rsvp-block{border-top:none;}
-    .rsvp-buttons, .rsvp-status{display:none !important;}
-    .rsvp-for::after{
-      content:"Merci de confirmer votre présence via le lien de cette invitation.";
-      display:block;margin-top:1rem;font-size:.8rem;color:var(--ink-soft);
-    }
+    .rsvp-btn{cursor:default;}
     section.qr-block, section.rsvp-block{break-inside:avoid;}
   }
 
