@@ -162,6 +162,47 @@
   }
 
   @media (prefers-reduced-motion:reduce){ .rsvp-btn{transition:none;} }
+
+  /* ===== Pop-up de confirmation RSVP ===== */
+  .rsvp-modal-backdrop{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(17,17,17,.55);
+    align-items:center;justify-content:center;
+    padding:1.2rem;
+    z-index:100;
+  }
+  .rsvp-modal-backdrop.show{display:flex;}
+  .rsvp-modal{
+    background:var(--white);
+    border-radius:16px;
+    max-width:360px;
+    width:100%;
+    padding:2.2rem 1.8rem 1.8rem;
+    text-align:center;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
+    animation:modalIn .2s ease-out;
+  }
+  @keyframes modalIn{
+    from{opacity:0;transform:translateY(8px) scale(.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  @media (prefers-reduced-motion:reduce){ .rsvp-modal{animation:none;} }
+  .rsvp-modal-icon{
+    width:56px;height:56px;margin:0 auto 1.1rem;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.6rem;
+  }
+  .rsvp-modal-icon.ok{background:#E7F4EA;color:#1E7B34;}
+  .rsvp-modal-icon.info{background:#F1F1F1;color:var(--ink-soft);}
+  .rsvp-modal-title{font-size:1.15rem;font-weight:600;margin:0 0 .6rem;}
+  .rsvp-modal-text{font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin:0 0 1.6rem;}
+  .rsvp-modal-close{
+    font-family:'Poppins',Arial,sans-serif;font-size:.88rem;font-weight:500;
+    padding:.75rem 1.6rem;border-radius:999px;border:none;
+    background:var(--ink);color:#fff;cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -211,6 +252,15 @@
 
 </div>
 
+<div class="rsvp-modal-backdrop" id="rsvpModalBackdrop">
+  <div class="rsvp-modal" role="dialog" aria-modal="true">
+    <div class="rsvp-modal-icon" id="rsvpModalIcon"></div>
+    <p class="rsvp-modal-title" id="rsvpModalTitle"></p>
+    <p class="rsvp-modal-text" id="rsvpModalText"></p>
+    <button class="rsvp-modal-close" id="rsvpModalClose">Fermer</button>
+  </div>
+</div>
+
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -241,19 +291,55 @@
 
   function reflectStatus(statut){
     Array.from(buttonsEl.children).forEach(btn => {
-      btn.classList.add('is-disabled');
       btn.classList.toggle('chosen', btn.dataset.status === statut);
     });
     const labels = {
-      confirme: 'Merci ! Votre présence est confirmée.',
-      decline: "Merci de nous avoir répondu — vous nous manquerez.",
+      confirme: 'Présence confirmée. Vous pouvez changer votre réponse à tout moment via ce lien.',
+      decline: "Réponse enregistrée. Vous pouvez changer votre réponse à tout moment via ce lien.",
       plus_tard: 'Merci — vous pourrez confirmer plus tard via ce même lien.'
     };
     statusEl.textContent = labels[statut] || '';
   }
 
+  const modalBackdrop = document.getElementById('rsvpModalBackdrop');
+  const modalIcon = document.getElementById('rsvpModalIcon');
+  const modalTitle = document.getElementById('rsvpModalTitle');
+  const modalText = document.getElementById('rsvpModalText');
+  const modalClose = document.getElementById('rsvpModalClose');
+
+  function openModal(statut, nom){
+    const guest = nom || 'Cher invité';
+    const content = {
+      confirme: {
+        icon: 'ok', symbol: '✓',
+        title: 'Présence confirmée',
+        text: 'Merci ' + guest + ' ! Votre présence a bien été enregistrée. Nous avons hâte de vous célébrer avec vous.'
+      },
+      decline: {
+        icon: 'info', symbol: '✕',
+        title: 'Réponse enregistrée',
+        text: 'Merci de nous avoir prévenus, ' + guest + '. Vous nous manquerez le jour J.'
+      },
+      plus_tard: {
+        icon: 'info', symbol: '…',
+        title: 'Réponse enregistrée',
+        text: 'Merci ' + guest + '. Vous pourrez revenir confirmer votre présence via ce même lien quand vous serez prêt.'
+      }
+    }[statut];
+    if (!content) return;
+    modalIcon.className = 'rsvp-modal-icon ' + content.icon;
+    modalIcon.textContent = content.symbol;
+    modalTitle.textContent = content.title;
+    modalText.textContent = content.text;
+    modalBackdrop.classList.add('show');
+  }
+  function closeModal(){ modalBackdrop.classList.remove('show'); }
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
   async function submitStatus(statut){
     reflectStatus(statut);
+    openModal(statut, guestNameEl.textContent);
     if (!sb) return;
     const { error } = await sb.from('guests').update({ statut, date_reponse: new Date().toISOString() }).eq('code', code);
     if (error){ statusEl.textContent = "Votre réponse n'a pas pu être enregistrée, réessayez."; }
