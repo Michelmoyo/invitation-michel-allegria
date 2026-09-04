@@ -203,6 +203,19 @@
     padding:.75rem 1.6rem;border-radius:999px;border:none;
     background:var(--ink);color:#fff;cursor:pointer;
   }
+  .rsvp-modal-eyebrow{
+    font-size:.66rem;font-weight:500;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 .8rem;
+  }
+  .rsvp-modal-ask-title{font-size:1.25rem;font-weight:600;margin:0 0 .4rem;}
+  .rsvp-modal-ask-for{font-size:.85rem;color:var(--ink-soft);margin:0 0 1.6rem;}
+  .rsvp-modal-ask-for span{color:var(--ink);font-weight:500;}
+  .rsvp-modal-buttons{display:flex;flex-direction:column;gap:.7rem;}
+  .rsvp-modal-dismiss{
+    display:block;margin:1.2rem auto 0;background:none;border:none;
+    font-family:'Poppins',Arial,sans-serif;font-size:.78rem;color:var(--ink-soft);
+    text-decoration:underline;cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -253,12 +266,7 @@
 </div>
 
 <div class="rsvp-modal-backdrop" id="rsvpModalBackdrop">
-  <div class="rsvp-modal" role="dialog" aria-modal="true">
-    <div class="rsvp-modal-icon" id="rsvpModalIcon"></div>
-    <p class="rsvp-modal-title" id="rsvpModalTitle"></p>
-    <p class="rsvp-modal-text" id="rsvpModalText"></p>
-    <button class="rsvp-modal-close" id="rsvpModalClose">Fermer</button>
-  </div>
+  <div class="rsvp-modal" role="dialog" aria-modal="true" id="rsvpModalBody"></div>
 </div>
 
 <script>
@@ -302,12 +310,13 @@
   }
 
   const modalBackdrop = document.getElementById('rsvpModalBackdrop');
-  const modalIcon = document.getElementById('rsvpModalIcon');
-  const modalTitle = document.getElementById('rsvpModalTitle');
-  const modalText = document.getElementById('rsvpModalText');
-  const modalClose = document.getElementById('rsvpModalClose');
+  const modalBody = document.getElementById('rsvpModalBody');
+  let currentStatut = null;
 
-  function openModal(statut, nom){
+  function closeModal(){ modalBackdrop.classList.remove('show'); }
+  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+  function showThanksModal(statut, nom){
     const guest = nom || 'Cher invité';
     const content = {
       confirme: {
@@ -327,19 +336,52 @@
       }
     }[statut];
     if (!content) return;
-    modalIcon.className = 'rsvp-modal-icon ' + content.icon;
-    modalIcon.textContent = content.symbol;
-    modalTitle.textContent = content.title;
-    modalText.textContent = content.text;
+    modalBody.innerHTML =
+      '<div class="rsvp-modal-icon ' + content.icon + '">' + content.symbol + '</div>' +
+      '<p class="rsvp-modal-title">' + content.title + '</p>' +
+      '<p class="rsvp-modal-text">' + content.text + '</p>' +
+      '<button class="rsvp-modal-close" id="rsvpModalCloseBtn">Fermer</button>' +
+      '<button class="rsvp-modal-dismiss" id="rsvpModalChange">Changer ma réponse</button>';
     modalBackdrop.classList.add('show');
+    document.getElementById('rsvpModalCloseBtn').addEventListener('click', () => {
+      try{ sessionStorage.setItem('rsvp_modal_seen_' + code, '1'); }catch(e){}
+      closeModal();
+    });
+    document.getElementById('rsvpModalChange').addEventListener('click', showAskModal);
   }
-  function closeModal(){ modalBackdrop.classList.remove('show'); }
-  modalClose.addEventListener('click', closeModal);
-  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+  function showAskModal(){
+    const guest = guestNameEl.textContent || 'Cher invité';
+    modalBody.innerHTML =
+      '<p class="rsvp-modal-eyebrow">Save the date</p>' +
+      '<p class="rsvp-modal-ask-title">Confirmez votre présence</p>' +
+      '<p class="rsvp-modal-ask-for">Invitation adressée à <span>' + guest + '</span></p>' +
+      '<div class="rsvp-modal-buttons" id="rsvpModalButtons">' +
+        '<button class="rsvp-btn primary" data-status="confirme">Je confirme ma présence</button>' +
+        '<button class="rsvp-btn secondary" data-status="decline">Je ne pourrai pas répondre présent</button>' +
+        '<button class="rsvp-btn tertiary" data-status="plus_tard">Je vais confirmer plus tard</button>' +
+      '</div>' +
+      '<button class="rsvp-modal-dismiss" id="rsvpModalDismiss">Voir l\'invitation en entier</button>';
+    Array.from(document.getElementById('rsvpModalButtons').children).forEach(btn => {
+      btn.classList.toggle('chosen', btn.dataset.status === currentStatut);
+    });
+    modalBackdrop.classList.add('show');
+    document.getElementById('rsvpModalButtons').addEventListener('click', (e) => {
+      const btn = e.target.closest('.rsvp-btn');
+      if (!btn) return;
+      submitStatus(btn.dataset.status);
+    });
+    document.getElementById('rsvpModalDismiss').addEventListener('click', () => {
+      try{ sessionStorage.setItem('rsvp_modal_seen_' + code, '1'); }catch(e){}
+      closeModal();
+    });
+  }
 
   async function submitStatus(statut){
+    currentStatut = statut;
     reflectStatus(statut);
-    openModal(statut, guestNameEl.textContent);
+    try{ sessionStorage.setItem('rsvp_modal_seen_' + code, '1'); }catch(e){}
+    showThanksModal(statut, guestNameEl.textContent);
     if (!sb) return;
     const { error } = await sb.from('guests').update({ statut, date_reponse: new Date().toISOString() }).eq('code', code);
     if (error){ statusEl.textContent = "Votre réponse n'a pas pu être enregistrée, réessayez."; }
@@ -354,14 +396,27 @@
     }
     const { data, error } = await sb.from('guests').select('*').eq('code', code).maybeSingle();
     if (error || !data){ renderGuest(null, null); return; }
+    currentStatut = data.statut || null;
     renderGuest(data.nom, data.statut);
 
-    // Ouvert depuis un lien de bouton imprimé (?rsvp=...) et pas déjà répondu
-    if (rsvpFromLink && (!data.statut || data.statut === 'en_attente')){
-      await submitStatus(rsvpFromLink);
+    let alreadySeen = false;
+    try{ alreadySeen = sessionStorage.getItem('rsvp_modal_seen_' + code) === '1'; }catch(e){}
+
+    // Lien direct d'un bouton imprimé : on ouvre le pop-up avec ce choix pré-sélectionné
+    if (rsvpFromLink){
       const clean = new URL(window.location.href);
       clean.searchParams.delete('rsvp');
       window.history.replaceState({}, '', clean.toString());
+    }
+
+    // Le pop-up de réponse s'ouvre directement à l'arrivée, pour éviter d'avoir à
+    // faire défiler toute l'invitation avant de pouvoir répondre.
+    if (!alreadySeen){
+      if (data.statut === 'confirme' || data.statut === 'decline' || data.statut === 'plus_tard'){
+        showThanksModal(data.statut, data.nom);
+      } else {
+        showAskModal();
+      }
     }
   }
 
