@@ -119,6 +119,11 @@
 
   @media print{
     @page{margin:0;}
+    *{
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+      color-adjust:exact;
+    }
     body{background:#fff !important;padding:0 !important;display:block;}
     .pdf-bar{display:none !important;}
     .card{box-shadow:none;max-width:100%;margin:0;overflow:visible;}
