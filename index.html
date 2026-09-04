@@ -25,13 +25,12 @@
     background:var(--page-bg);
     color:var(--ink);
     font-family:'Poppins',Arial,sans-serif;
-    display:flex;
-    justify-content:center;
     padding:clamp(1rem,4vw,3rem) clamp(.75rem,3vw,2rem);
   }
   .card{
     width:100%;
     max-width:640px;
+    margin:0 auto;
     background:var(--white);
     box-shadow:0 30px 70px -25px rgba(0,0,0,.35);
     overflow:hidden;
@@ -81,46 +80,81 @@
   .rsvp-for span{color:var(--ink);font-weight:500;}
   .rsvp-buttons{position:relative;display:flex;flex-direction:column;gap:.85rem;max-width:400px;margin:0 auto;}
   .rsvp-btn{
+    display:block;
     font-family:'Poppins',Arial,sans-serif;font-size:.92rem;font-weight:500;padding:1rem 1.2rem;
     border-radius:999px;cursor:pointer;transition:opacity .15s ease, transform .15s ease;border:1.4px solid var(--ink);
+    text-decoration:none;
   }
   .rsvp-btn:hover{transform:translateY(-1px);}
   .rsvp-btn.primary{background:var(--ink);color:var(--white);}
   .rsvp-btn.secondary{background:var(--white);color:var(--ink);}
   .rsvp-btn.tertiary{background:var(--paper);color:var(--ink);border-color:var(--paper);}
-  .rsvp-btn[disabled]{opacity:.35;cursor:default;transform:none;}
+  .rsvp-btn.is-disabled{opacity:.35;cursor:default;transform:none;pointer-events:none;}
   .rsvp-btn.chosen{opacity:1;outline:2px solid var(--ink);outline-offset:2px;}
   .rsvp-status{position:relative;margin-top:1.6rem;font-size:.88rem;color:var(--ink-soft);min-height:1.2em;}
   .footer-note{position:relative;margin-top:2.6rem;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft);}
 
   .pdf-bar{
-    max-width:640px;margin:0 auto 1rem;text-align:center;
-    display:flex;gap:.6rem;justify-content:center;flex-wrap:nowrap;
+    max-width:640px;margin:0 auto 1rem;
+    display:flex;gap:.6rem;flex-wrap:nowrap;
   }
   .pdf-btn, .admin-link{
-    flex:0 1 auto;
+    flex:1 1 0;
     min-width:0;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    font-family:'Poppins',Arial,sans-serif;font-size:.82rem;font-weight:500;padding:.7rem 1.4rem;
+    text-align:center;
+    box-sizing:border-box;
+    font-family:'Poppins',Arial,sans-serif;font-size:.82rem;font-weight:500;padding:.7rem 1rem;
     border-radius:999px;border:1.4px solid var(--ink);background:var(--white);color:var(--ink);cursor:pointer;text-decoration:none;
   }
   @media (max-width:420px){
-    .pdf-bar{gap:.4rem;padding:0 .25rem;}
-    .pdf-btn, .admin-link{font-size:.68rem;padding:.6rem .7rem;}
+    .pdf-bar{gap:.4rem;}
+    .pdf-btn, .admin-link{font-size:.7rem;padding:.6rem .5rem;}
   }
   @media (max-width:340px){
-    .pdf-btn, .admin-link{font-size:.62rem;padding:.55rem .5rem;}
+    .pdf-btn, .admin-link{font-size:.62rem;padding:.55rem .4rem;}
   }
 
   @media print{
+    @page{margin:0;}
     body{background:#fff !important;padding:0 !important;display:block;}
     .pdf-bar{display:none !important;}
-    .card{box-shadow:none;max-width:100%;}
+    .card{box-shadow:none;max-width:100%;margin:0;overflow:visible;}
     .qr-block, .rsvp-block{border-top:none;}
     .rsvp-btn{cursor:default;}
-    section.qr-block, section.rsvp-block{break-inside:avoid;}
+
+    .print-page{
+      break-inside:avoid;
+      page-break-inside:avoid;
+      break-after:page;
+      page-break-after:always;
+    }
+    .print-page:last-child{break-after:auto;page-break-after:auto;}
+
+    .print-page img.art{
+      display:block;
+      width:auto;
+      height:auto;
+      max-width:100%;
+      max-height:100vh;
+      margin:0 auto;
+    }
+    /* Ratio réel de l'image (2600x3648) : largeur = 100vh * (2600/3648) */
+    .name-wrap.print-page{
+      height:100vh;
+      width:calc(100vh * 0.71272);
+      max-width:100%;
+      margin:0 auto;
+    }
+    .name-wrap.print-page img.art{
+      width:100%;
+      height:100%;
+      max-width:none;
+      max-height:none;
+      margin:0;
+    }
   }
 
   @media (prefers-reduced-motion:reduce){ .rsvp-btn{transition:none;} }
@@ -135,18 +169,18 @@
 
 <div class="card">
 
-  <img class="art" src="assets/page1.jpg" alt="Michel et Allegria">
+  <div class="print-page"><img class="art" src="assets/page1.jpg" alt="Michel et Allegria"></div>
 
-  <div class="name-wrap">
+  <div class="name-wrap print-page">
     <img class="art" src="assets/page2.jpg" alt="Save the date">
     <div class="name-mask"></div>
     <p class="guest-name" id="guestName">Cher invité</p>
   </div>
 
-  <img class="art" src="assets/page3.jpg" alt="Mathieu 19:6">
-  <img class="art" src="assets/page4.jpg" alt="Programme">
+  <div class="print-page"><img class="art" src="assets/page3.jpg" alt="Mathieu 19:6"></div>
+  <div class="print-page"><img class="art" src="assets/page4.jpg" alt="Programme"></div>
 
-  <section class="qr-block">
+  <section class="qr-block print-page">
     <p class="eyebrow">Votre entrée</p>
     <div class="qr-frame">
       <span class="corner c-tl"></span><span class="corner c-tr"></span>
@@ -157,15 +191,15 @@
     <p class="qr-copy">Votre ponctualité sera une preuve d'amour que nous chérirons.</p>
   </section>
 
-  <section class="rsvp-block">
+  <section class="rsvp-block print-page">
     <div class="rsvp-watermark">AM</div>
     <h2 class="rsvp-title">Confirmez votre présence</h2>
     <p class="rsvp-for">Invitation adressée à <span id="rsvpFor">Cher invité</span></p>
 
     <div class="rsvp-buttons" id="rsvpButtons">
-      <button class="rsvp-btn primary" data-status="confirme">Je confirme ma présence</button>
-      <button class="rsvp-btn secondary" data-status="decline">Je ne pourrai pas répondre présent</button>
-      <button class="rsvp-btn tertiary" data-status="plus_tard">Je vais confirmer plus tard</button>
+      <a class="rsvp-btn primary" data-status="confirme" href="#">Je confirme ma présence</a>
+      <a class="rsvp-btn secondary" data-status="decline" href="#">Je ne pourrai pas répondre présent</a>
+      <a class="rsvp-btn tertiary" data-status="plus_tard" href="#">Je vais confirmer plus tard</a>
     </div>
     <p class="rsvp-status" id="rsvpStatus"></p>
 
@@ -178,6 +212,7 @@
 (function(){
   const params = new URLSearchParams(window.location.search);
   const code = params.get('g') || 'demo';
+  const rsvpFromLink = params.get('rsvp');
 
   const guestNameEl = document.getElementById('guestName');
   const rsvpForEl = document.getElementById('rsvpFor');
@@ -188,6 +223,12 @@
     ? supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
     : null;
 
+  // Chaque bouton pointe vers un lien réel (cliquable même depuis un PDF) ;
+  // le clic est intercepté sur la page pour répondre sans recharger.
+  Array.from(buttonsEl.children).forEach(btn => {
+    btn.href = 'index.html?g=' + encodeURIComponent(code) + '&rsvp=' + encodeURIComponent(btn.dataset.status);
+  });
+
   function renderGuest(nom, statut){
     const display = nom || 'Cher invité';
     guestNameEl.textContent = display;
@@ -197,7 +238,7 @@
 
   function reflectStatus(statut){
     Array.from(buttonsEl.children).forEach(btn => {
-      btn.disabled = true;
+      btn.classList.add('is-disabled');
       btn.classList.toggle('chosen', btn.dataset.status === statut);
     });
     const labels = {
@@ -208,25 +249,38 @@
     statusEl.textContent = labels[statut] || '';
   }
 
+  async function submitStatus(statut){
+    reflectStatus(statut);
+    if (!sb) return;
+    const { error } = await sb.from('guests').update({ statut, date_reponse: new Date().toISOString() }).eq('code', code);
+    if (error){ statusEl.textContent = "Votre réponse n'a pas pu être enregistrée, réessayez."; }
+  }
+
   async function init(){
     if (!sb){
       renderGuest(null, null);
       statusEl.textContent = "La confirmation en ligne n'est pas disponible pour le moment.";
-      Array.from(buttonsEl.children).forEach(btn => btn.disabled = true);
+      Array.from(buttonsEl.children).forEach(btn => btn.classList.add('is-disabled'));
       return;
     }
     const { data, error } = await sb.from('guests').select('*').eq('code', code).maybeSingle();
     if (error || !data){ renderGuest(null, null); return; }
     renderGuest(data.nom, data.statut);
+
+    // Ouvert depuis un lien de bouton imprimé (?rsvp=...) et pas déjà répondu
+    if (rsvpFromLink && (!data.statut || data.statut === 'en_attente')){
+      await submitStatus(rsvpFromLink);
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete('rsvp');
+      window.history.replaceState({}, '', clean.toString());
+    }
   }
 
-  buttonsEl.addEventListener('click', async (e) => {
+  buttonsEl.addEventListener('click', (e) => {
     const btn = e.target.closest('.rsvp-btn');
-    if (!btn || btn.disabled || !sb) return;
-    const statut = btn.dataset.status;
-    reflectStatus(statut);
-    const { error } = await sb.from('guests').update({ statut, date_reponse: new Date().toISOString() }).eq('code', code);
-    if (error){ statusEl.textContent = "Votre réponse n'a pas pu être enregistrée, réessayez."; }
+    if (!btn || btn.classList.contains('is-disabled') || !sb) return;
+    e.preventDefault();
+    submitStatus(btn.dataset.status);
   });
 
   if (typeof QRCode !== 'undefined'){
