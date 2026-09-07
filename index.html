@@ -125,6 +125,7 @@
     }
     body{background:#fff !important;padding:0 !important;display:block;}
     .pdf-bar{display:none !important;}
+    .rsvp-modal-backdrop{display:none !important;}
     .card{box-shadow:none;max-width:100%;margin:0;overflow:visible;}
     .qr-block, .rsvp-block{border-top:none;}
     .rsvp-btn{cursor:default;}
@@ -274,6 +275,7 @@
   const params = new URLSearchParams(window.location.search);
   const code = params.get('g') || 'demo';
   const rsvpFromLink = params.get('rsvp');
+  const autoprint = params.get('autoprint') === '1';
 
   const guestNameEl = document.getElementById('guestName');
   const rsvpForEl = document.getElementById('rsvpFor');
@@ -411,12 +413,17 @@
 
     // Le pop-up de réponse s'ouvre directement à l'arrivée, pour éviter d'avoir à
     // faire défiler toute l'invitation avant de pouvoir répondre.
-    if (!alreadySeen){
+    // (Sauté en mode autoprint : c'est l'organisateur qui télécharge le PDF, pas l'invité.)
+    if (!alreadySeen && !autoprint){
       if (data.statut === 'confirme' || data.statut === 'decline' || data.statut === 'plus_tard'){
         showThanksModal(data.statut, data.nom);
       } else {
         showAskModal();
       }
+    }
+
+    if (autoprint){
+      setTimeout(() => window.print(), 600);
     }
   }
 

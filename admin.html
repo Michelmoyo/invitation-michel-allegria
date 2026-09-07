@@ -72,16 +72,24 @@
   .recent-list h3{
     font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .8rem;
   }
+  .recent-search{
+    width:100%;font-family:'Poppins',Arial,sans-serif;font-size:.85rem;padding:.6rem .75rem;
+    border:1.4px solid var(--line);border-radius:8px;outline:none;margin-bottom:.9rem;
+  }
+  .recent-search:focus{border-color:var(--ink);}
+  .recent-rows-scroll{max-height:420px;overflow-y:auto;}
   .recent-row{
     display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0;
     border-top:1px solid var(--line);font-size:.85rem;
   }
   .recent-row .rn-name{font-weight:500;}
   .recent-row .rn-code{color:var(--ink-soft);font-size:.75rem;}
-  .recent-row button{
-    background:none;border:1.4px solid var(--line);border-radius:999px;padding:.3rem .8rem;font-size:.72rem;
-    cursor:pointer;color:var(--ink);font-family:'Poppins',Arial,sans-serif;
+  .recent-row-actions{display:flex;gap:.4rem;flex:none;}
+  .recent-row-actions button{
+    background:none;border:1.4px solid var(--line);border-radius:999px;padding:.3rem .55rem;font-size:.85rem;
+    cursor:pointer;color:var(--ink);font-family:'Poppins',Arial,sans-serif;line-height:1;
   }
+  .recent-row-actions button:hover{border-color:var(--ink);}
   .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1.8rem;}
   .stat-tile{border:1.4px solid var(--line);border-radius:10px;padding:.9rem .6rem;text-align:center;}
   .stat-tile .n{font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums;}
@@ -162,7 +170,8 @@
       </div>
 
       <div class="recent-list">
-        <h3>Derniers invités ajoutés</h3>
+        <h3>Tous les invités (<span id="recentCount">0</span>)</h3>
+        <input type="text" id="recentSearch" class="recent-search" placeholder="Rechercher un nom...">
         <div id="recentRows"></div>
       </div>
     </div>
@@ -268,25 +277,48 @@ async function startAdminApp(){
   const addResultCopy = document.getElementById('addResultCopy');
   const addResultQr = document.getElementById('addResultQr');
   const recentRows = document.getElementById('recentRows');
+  const recentSearch = document.getElementById('recentSearch');
+  const recentCount = document.getElementById('recentCount');
+  let allGuestsCache = [];
 
-  async function refreshRecent(){
-    const { data, error } = await sb.from('guests').select('*').order('date_ajout', { ascending: false }).limit(10);
-    if (error || !data) return;
+  function renderRecent(filterText){
+    const q = (filterText || '').trim().toLowerCase();
+    const list = q
+      ? allGuestsCache.filter(g => (g.nom || g.code).toLowerCase().includes(q))
+      : allGuestsCache;
+    recentCount.textContent = allGuestsCache.length;
     recentRows.innerHTML = '';
-    data.forEach(g => {
+    const wrap = document.createElement('div');
+    wrap.className = 'recent-rows-scroll';
+    list.forEach(g => {
       const row = document.createElement('div');
       row.className = 'recent-row';
       const link = baseLink + '?g=' + encodeURIComponent(g.code);
       row.innerHTML =
         '<span><span class="rn-name">' + escapeHtml(g.nom || g.code) + '</span> ' +
         '<span class="rn-code">(' + escapeHtml(g.code) + ')</span></span>' +
-        '<button data-link="' + link + '">Copier le lien</button>';
-      recentRows.appendChild(row);
+        '<span class="recent-row-actions">' +
+          '<button data-link="' + link + '" title="Copier le lien">📋</button>' +
+          '<button data-download="' + link + '&autoprint=1" title="Télécharger le PDF">⬇️</button>' +
+        '</span>';
+      wrap.appendChild(row);
     });
+    recentRows.appendChild(wrap);
     recentRows.querySelectorAll('button[data-link]').forEach(b => {
       b.addEventListener('click', () => copyText(b.dataset.link, b));
     });
+    recentRows.querySelectorAll('button[data-download]').forEach(b => {
+      b.addEventListener('click', () => window.open(b.dataset.download, '_blank'));
+    });
   }
+
+  async function refreshRecent(){
+    const { data, error } = await sb.from('guests').select('*').order('nom', { ascending: true }).limit(500);
+    if (error || !data) return;
+    allGuestsCache = data;
+    renderRecent(recentSearch.value);
+  }
+  recentSearch.addEventListener('input', () => renderRecent(recentSearch.value));
 
   addSubmit.addEventListener('click', async () => {
     const nom = addNom.value.trim();
