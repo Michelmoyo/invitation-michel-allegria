@@ -323,14 +323,19 @@ async function startAdminApp(){
   async function loadDashboard(){
     const { data, error } = await sb.from('guests').select('*').limit(500);
     if (error || !data) return;
+    // Chaque ligne compte pour 1 + ses accompagnants (nombre réel de personnes).
+    const headcount = g => 1 + (parseInt(g.accompagnants, 10) || 0);
     const counts = { confirme: 0, decline: 0, plus_tard: 0, en_attente: 0, present: 0 };
+    let total = 0;
     data.forEach(g => {
+      const n = headcount(g);
+      total += n;
       const s = g.statut || 'en_attente';
-      if (counts[s] !== undefined) counts[s]++;
-      if (g.checked_in) counts.present++;
+      if (counts[s] !== undefined) counts[s] += n;
+      if (g.checked_in) counts.present += n;
     });
     statsGrid.innerHTML = [
-      ['Total', data.length], ['Confirmés', counts.confirme], ['En attente', counts.en_attente],
+      ['Total', total], ['Confirmés', counts.confirme], ['En attente', counts.en_attente],
       ['Déclinés', counts.decline], ['À reconfirmer', counts.plus_tard], ['Présents', counts.present]
     ].map(([l, n]) => '<div class="stat-tile"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>').join('');
 
@@ -340,7 +345,9 @@ async function startAdminApp(){
       .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
       .map(g => {
         const s = g.statut || 'en_attente';
-        return '<tr><td>' + escapeHtml(g.nom || g.code) + '</td>' +
+        const accomp = parseInt(g.accompagnants, 10) || 0;
+        const accompBadge = accomp > 0 ? ' <span class="rn-code">(+' + accomp + ')</span>' : '';
+        return '<tr><td>' + escapeHtml(g.nom || g.code) + accompBadge + '</td>' +
           '<td><span class="pill ' + s + '">' + (statutLabel[s] || s) + '</span></td>' +
           '<td>' + (g.checked_in ? '<span class="check-yes">Oui</span>' : '<span class="check-no">—</span>') + '</td>' +
           '<td><div class="row-actions">' +
