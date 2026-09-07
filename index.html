@@ -297,6 +297,13 @@
     guestNameEl.textContent = display;
     rsvpForEl.textContent = display;
     if (statut && statut !== 'en_attente'){ reflectStatus(statut); }
+
+    // Le nom du fichier PDF proposé par le navigateur reprend le titre de la page.
+    const forFilename = display
+      .replace(/^Cher\/Chère\s+/i, '')
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .trim();
+    document.title = 'Michel & Allegria - ' + (forFilename || 'Invitation');
   }
 
   function reflectStatus(statut){
