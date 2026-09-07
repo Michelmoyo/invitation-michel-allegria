@@ -160,6 +160,18 @@
       max-height:none;
       margin:0;
     }
+
+    /* QR code plus grand et centré sur sa page à l'impression */
+    .qr-block.print-page{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+    }
+    .qr-block .qr-frame{
+      width:min(70%,420px);
+    }
   }
 
   @media (prefers-reduced-motion:reduce){ .rsvp-btn{transition:none;} }
@@ -443,7 +455,7 @@
 
   if (typeof QRCode !== 'undefined'){
     new QRCode(document.getElementById('qrcode'), {
-      text: window.location.href, width: 512, height: 512,
+      text: window.location.href, width: 800, height: 800,
       colorDark: '#111111', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M
     });
   }
