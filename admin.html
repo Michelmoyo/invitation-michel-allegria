@@ -281,10 +281,13 @@ async function startAdminApp(){
   const recentCount = document.getElementById('recentCount');
   let allGuestsCache = [];
 
+  function normSearch(s){
+    return (s || '').toString().normalize('NFD').replace(/[^\x00-\x7F]/g, '').toLowerCase();
+  }
   function renderRecent(filterText){
-    const q = (filterText || '').trim().toLowerCase();
+    const q = normSearch(filterText).trim();
     const list = q
-      ? allGuestsCache.filter(g => (g.nom || g.code).toLowerCase().includes(q))
+      ? allGuestsCache.filter(g => normSearch(g.nom || g.code).includes(q))
       : allGuestsCache;
     recentCount.textContent = allGuestsCache.length;
     recentRows.innerHTML = '';
