@@ -79,9 +79,10 @@
   .recent-search:focus{border-color:var(--ink);}
   .recent-rows-scroll{max-height:420px;overflow-y:auto;}
   .recent-row{
-    display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0;
+    display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.4rem .6rem;padding:.6rem 0;
     border-top:1px solid var(--line);font-size:.85rem;
   }
+  .recent-row > span:first-child{flex:1 1 auto;min-width:0;}
   .recent-row .rn-name{font-weight:500;}
   .recent-row .rn-code{color:var(--ink-soft);font-size:.75rem;}
   .recent-row-actions{display:flex;gap:.4rem;flex:none;}
@@ -293,13 +294,18 @@ async function startAdminApp(){
     recentRows.innerHTML = '';
     const wrap = document.createElement('div');
     wrap.className = 'recent-rows-scroll';
+    const statutLabel = { confirme: 'Confirmé', decline: 'Décliné', plus_tard: 'Plus tard', en_attente: 'En attente' };
     list.forEach(g => {
       const row = document.createElement('div');
       row.className = 'recent-row';
       const link = baseLink + '?g=' + encodeURIComponent(g.code);
+      const s = g.statut || 'en_attente';
       row.innerHTML =
         '<span><span class="rn-name">' + escapeHtml(g.nom || g.code) + '</span> ' +
-        '<span class="rn-code">(' + escapeHtml(g.code) + ')</span></span>' +
+        '<span class="rn-code">(' + escapeHtml(g.code) + ')</span> ' +
+        '<span class="pill ' + s + '">' + (statutLabel[s] || s) + '</span>' +
+        (g.checked_in ? ' <span class="check-yes">Présent</span>' : '') +
+        '</span>' +
         '<span class="recent-row-actions">' +
           '<button data-link="' + link + '" title="Copier le lien">📋</button>' +
           '<button data-download="' + link + '&autoprint=1" title="Télécharger le PDF">⬇️</button>' +
@@ -422,6 +428,7 @@ async function startAdminApp(){
   sb.channel('guests-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'guests' }, () => {
       if (document.getElementById('panel-dash').classList.contains('active')) loadDashboard();
+      if (document.getElementById('panel-add').classList.contains('active')) refreshRecent();
     })
     .subscribe();
 
