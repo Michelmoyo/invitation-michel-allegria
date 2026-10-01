@@ -23,3 +23,6 @@ alter publication supabase_realtime add table guests;
 
 -- Ajouté le 07/09/2026 : politique manquante, empêchait "Supprimer" de fonctionner
 create policy "guests_public_delete" on guests for delete using (true);
+
+-- Ajouté le 01/10/2026 : attribution des tables (plan de salle)
+alter table guests add column if not exists nom_table text;

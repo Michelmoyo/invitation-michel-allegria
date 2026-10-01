@@ -121,6 +121,8 @@
   .scan-banner.ok{background:#E7F4EA;color:#1E7B34;}
   .scan-banner.warn{background:#FFF4E0;color:#8A5A00;}
   .scan-banner.err{background:#FBEAEA;color:#B3261E;}
+  .scan-table{display:inline-block;margin-top:.5rem;font-size:1.15rem;}
+  .scan-table strong{font-size:1.3rem;}
   .manual-row{display:flex;gap:.5rem;margin-top:1.4rem;}
   .manual-row input{
     flex:1;font-size:.85rem;padding:.6rem .7rem;border:1.4px solid var(--line);border-radius:8px;
@@ -436,9 +438,12 @@ async function startAdminApp(){
   let scanLock = false;
   const scanBanner = document.getElementById('scanBanner');
 
-  function showScanResult(kind, text){
+  function showScanResult(kind, html){
     scanBanner.className = 'scan-banner show ' + kind;
-    scanBanner.textContent = text;
+    scanBanner.innerHTML = html;
+  }
+  function tableLine(nomTable){
+    return nomTable ? '<br><span class="scan-table">Table : <strong>' + escapeHtml(nomTable) + '</strong></span>' : '';
   }
   function extractCode(text){
     try{ const u = new URL(text); const g = u.searchParams.get('g'); if (g) return g; }catch(e){}
@@ -447,16 +452,17 @@ async function startAdminApp(){
   async function checkInGuest(code){
     if (!code) return;
     const { data, error } = await sb.from('guests').select('*').eq('code', code).maybeSingle();
-    if (error || !data){ showScanResult('err', 'Invité inconnu (' + code + ')'); return; }
+    if (error || !data){ showScanResult('err', 'Invité inconnu (' + escapeHtml(code) + ')'); return; }
+    const nom = escapeHtml(data.nom || code);
     if (data.checked_in){
       const t = data.checked_in_at ? new Date(data.checked_in_at).toLocaleTimeString('fr-FR') : '';
-      showScanResult('warn', 'Déjà enregistré — ' + (data.nom || code) + (t ? ' (' + t + ')' : ''));
+      showScanResult('warn', 'Déjà enregistré — ' + nom + (t ? ' (' + t + ')' : '') + tableLine(data.nom_table));
       return;
     }
     const { error: upErr } = await sb.from('guests').update({ checked_in: true, checked_in_at: new Date().toISOString() }).eq('code', code);
     if (upErr){ showScanResult('err', 'Erreur de vérification.'); return; }
-    if (data.statut !== 'confirme'){ showScanResult('warn', 'Non confirmé — ' + (data.nom || code)); }
-    else { showScanResult('ok', 'Bienvenue ' + (data.nom || code)); }
+    if (data.statut !== 'confirme'){ showScanResult('warn', 'Non confirmé — ' + nom + tableLine(data.nom_table)); }
+    else { showScanResult('ok', 'Bienvenue ' + nom + tableLine(data.nom_table)); }
   }
   function onScanSuccess(decodedText){
     if (scanLock) return;
