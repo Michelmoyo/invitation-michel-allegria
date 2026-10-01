@@ -522,8 +522,9 @@ async function startAdminApp(){
     }
     const { error: upErr } = await sb.from('guests').update({ checked_in: true, checked_in_at: new Date().toISOString() }).eq('code', code);
     if (upErr){ showScanResult('err', 'Erreur de vérification', ''); return; }
-    if (data.statut !== 'confirme'){ showScanResult('warn', nom, 'Non confirmé', data.nom_table); }
-    else { showScanResult('ok', nom, 'Bienvenue !', data.nom_table); }
+    // Présent dans la base = succès, qu'il ait confirmé son RSVP ou non.
+    const sub = data.statut === 'confirme' ? 'Bienvenue !' : 'Bienvenue ! (non confirmé au préalable)';
+    showScanResult('ok', nom, sub, data.nom_table);
   }
   function onScanSuccess(decodedText){
     if (scanLock) return;
