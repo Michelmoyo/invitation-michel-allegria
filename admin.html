@@ -130,10 +130,17 @@
   }
   .scan-modal-backdrop.show{display:flex;}
   .scan-modal{
+    position:relative;
     width:100%;max-width:340px;border-radius:20px;padding:2.4rem 1.8rem 2.2rem;
     text-align:center;box-shadow:0 30px 70px -20px rgba(0,0,0,.55);
     animation:scanPop .25s cubic-bezier(.2,.9,.3,1.2);
   }
+  .scan-modal-close{
+    position:absolute;top:.7rem;right:.8rem;width:32px;height:32px;border-radius:50%;
+    border:none;background:rgba(0,0,0,.08);color:var(--ink);font-size:1.3rem;line-height:1;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .scan-modal-close:hover{background:rgba(0,0,0,.16);}
   @keyframes scanPop{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
   @media (prefers-reduced-motion:reduce){ .scan-modal{animation:none;} }
   .scan-modal.ok{background:linear-gradient(180deg,#EAF8EE,#D8F3E0);border:1.4px solid #8FD9A8;}
@@ -229,6 +236,7 @@
 
     <div class="scan-modal-backdrop" id="scanModalBackdrop">
       <div class="scan-modal" id="scanModalCard">
+        <button class="scan-modal-close" id="scanModalClose" aria-label="Fermer">×</button>
         <div class="scan-modal-icon" id="scanModalIcon"></div>
         <p class="scan-modal-name" id="scanModalName"></p>
         <p class="scan-modal-table" id="scanModalTable"></p>
@@ -480,9 +488,9 @@ async function startAdminApp(){
   const scanModalIcon = document.getElementById('scanModalIcon');
   const scanModalName = document.getElementById('scanModalName');
   const scanModalTable = document.getElementById('scanModalTable');
-  let scanModalTimer = null;
-
   const SCAN_ICONS = { ok: '✓', warn: '!', err: '✕' };
+
+  function closeScanModal(){ scanModalBackdrop.classList.remove('show'); }
 
   function showScanResult(kind, name, sub, nomTable){
     scanBanner.classList.remove('show');
@@ -492,13 +500,10 @@ async function startAdminApp(){
     scanModalName.innerHTML = escapeHtml(name) + (sub ? '<br><span style="font-size:.85rem;font-weight:400;">' + escapeHtml(sub) + '</span>' : '');
     scanModalTable.innerHTML = nomTable ? 'Table<strong>' + escapeHtml(nomTable) + '</strong>' : '';
     scanModalBackdrop.classList.add('show');
-
-    clearTimeout(scanModalTimer);
-    scanModalTimer = setTimeout(() => scanModalBackdrop.classList.remove('show'), 2800);
   }
-  scanModalBackdrop.addEventListener('click', () => {
-    clearTimeout(scanModalTimer);
-    scanModalBackdrop.classList.remove('show');
+  document.getElementById('scanModalClose').addEventListener('click', closeScanModal);
+  scanModalBackdrop.addEventListener('click', (e) => {
+    if (e.target === scanModalBackdrop) closeScanModal();
   });
 
   function extractCode(text){
