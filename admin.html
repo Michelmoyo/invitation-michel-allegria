@@ -123,6 +123,35 @@
   .scan-banner.err{background:#FBEAEA;color:#B3261E;}
   .scan-table{display:inline-block;margin-top:.5rem;font-size:1.15rem;}
   .scan-table strong{font-size:1.3rem;}
+
+  .scan-modal-backdrop{
+    display:none;position:fixed;inset:0;background:rgba(17,17,17,.6);
+    align-items:center;justify-content:center;padding:1.2rem;z-index:200;
+  }
+  .scan-modal-backdrop.show{display:flex;}
+  .scan-modal{
+    width:100%;max-width:340px;border-radius:20px;padding:2.4rem 1.8rem 2.2rem;
+    text-align:center;box-shadow:0 30px 70px -20px rgba(0,0,0,.55);
+    animation:scanPop .25s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes scanPop{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+  @media (prefers-reduced-motion:reduce){ .scan-modal{animation:none;} }
+  .scan-modal.ok{background:linear-gradient(180deg,#EAF8EE,#D8F3E0);border:1.4px solid #8FD9A8;}
+  .scan-modal.warn{background:linear-gradient(180deg,#FFF8EA,#FFEFCF);border:1.4px solid #F0C96B;}
+  .scan-modal.err{background:linear-gradient(180deg,#FDECEC,#FBD9D9);border:1.4px solid #EFA6A6;}
+  .scan-modal-icon{
+    width:72px;height:72px;margin:0 auto 1.1rem;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:2.2rem;color:#fff;
+  }
+  .scan-modal.ok .scan-modal-icon{background:#1E9E4A;}
+  .scan-modal.warn .scan-modal-icon{background:#B9811A;}
+  .scan-modal.err .scan-modal-icon{background:#C23A3A;}
+  .scan-modal-name{font-size:1.25rem;font-weight:700;margin:0 0 .3rem;color:var(--ink);}
+  .scan-modal.ok .scan-modal-name{color:#1E7B34;}
+  .scan-modal.warn .scan-modal-name{color:#8A5A00;}
+  .scan-modal.err .scan-modal-name{color:#B3261E;}
+  .scan-modal-table{font-size:1rem;margin:0;color:var(--ink-soft);}
+  .scan-modal-table strong{font-size:1.25rem;color:var(--ink);display:block;margin-top:.2rem;}
   .manual-row{display:flex;gap:.5rem;margin-top:1.4rem;}
   .manual-row input{
     flex:1;font-size:.85rem;padding:.6rem .7rem;border:1.4px solid var(--line);border-radius:8px;
@@ -195,6 +224,14 @@
       <div class="manual-row">
         <input id="manualCode" type="text" placeholder="Code invité (si le scan échoue)">
         <button class="btn" id="manualSubmit">Vérifier</button>
+      </div>
+    </div>
+
+    <div class="scan-modal-backdrop" id="scanModalBackdrop">
+      <div class="scan-modal" id="scanModalCard">
+        <div class="scan-modal-icon" id="scanModalIcon"></div>
+        <p class="scan-modal-name" id="scanModalName"></p>
+        <p class="scan-modal-table" id="scanModalTable"></p>
       </div>
     </div>
 
@@ -438,13 +475,32 @@ async function startAdminApp(){
   let scanLock = false;
   const scanBanner = document.getElementById('scanBanner');
 
-  function showScanResult(kind, html){
-    scanBanner.className = 'scan-banner show ' + kind;
-    scanBanner.innerHTML = html;
+  const scanModalBackdrop = document.getElementById('scanModalBackdrop');
+  const scanModalCard = document.getElementById('scanModalCard');
+  const scanModalIcon = document.getElementById('scanModalIcon');
+  const scanModalName = document.getElementById('scanModalName');
+  const scanModalTable = document.getElementById('scanModalTable');
+  let scanModalTimer = null;
+
+  const SCAN_ICONS = { ok: '✓', warn: '!', err: '✕' };
+
+  function showScanResult(kind, name, sub, nomTable){
+    scanBanner.classList.remove('show');
+
+    scanModalCard.className = 'scan-modal ' + kind;
+    scanModalIcon.textContent = SCAN_ICONS[kind] || '!';
+    scanModalName.innerHTML = escapeHtml(name) + (sub ? '<br><span style="font-size:.85rem;font-weight:400;">' + escapeHtml(sub) + '</span>' : '');
+    scanModalTable.innerHTML = nomTable ? 'Table<strong>' + escapeHtml(nomTable) + '</strong>' : '';
+    scanModalBackdrop.classList.add('show');
+
+    clearTimeout(scanModalTimer);
+    scanModalTimer = setTimeout(() => scanModalBackdrop.classList.remove('show'), 2800);
   }
-  function tableLine(nomTable){
-    return nomTable ? '<br><span class="scan-table">Table : <strong>' + escapeHtml(nomTable) + '</strong></span>' : '';
-  }
+  scanModalBackdrop.addEventListener('click', () => {
+    clearTimeout(scanModalTimer);
+    scanModalBackdrop.classList.remove('show');
+  });
+
   function extractCode(text){
     try{ const u = new URL(text); const g = u.searchParams.get('g'); if (g) return g; }catch(e){}
     return text.trim();
@@ -452,17 +508,17 @@ async function startAdminApp(){
   async function checkInGuest(code){
     if (!code) return;
     const { data, error } = await sb.from('guests').select('*').eq('code', code).maybeSingle();
-    if (error || !data){ showScanResult('err', 'Invité inconnu (' + escapeHtml(code) + ')'); return; }
-    const nom = escapeHtml(data.nom || code);
+    if (error || !data){ showScanResult('err', 'Invité inconnu', code); return; }
+    const nom = data.nom || code;
     if (data.checked_in){
       const t = data.checked_in_at ? new Date(data.checked_in_at).toLocaleTimeString('fr-FR') : '';
-      showScanResult('warn', 'Déjà enregistré — ' + nom + (t ? ' (' + t + ')' : '') + tableLine(data.nom_table));
+      showScanResult('warn', nom, 'Déjà enregistré' + (t ? ' à ' + t : ''), data.nom_table);
       return;
     }
     const { error: upErr } = await sb.from('guests').update({ checked_in: true, checked_in_at: new Date().toISOString() }).eq('code', code);
-    if (upErr){ showScanResult('err', 'Erreur de vérification.'); return; }
-    if (data.statut !== 'confirme'){ showScanResult('warn', 'Non confirmé — ' + nom + tableLine(data.nom_table)); }
-    else { showScanResult('ok', 'Bienvenue ' + nom + tableLine(data.nom_table)); }
+    if (upErr){ showScanResult('err', 'Erreur de vérification', ''); return; }
+    if (data.statut !== 'confirme'){ showScanResult('warn', nom, 'Non confirmé', data.nom_table); }
+    else { showScanResult('ok', nom, 'Bienvenue !', data.nom_table); }
   }
   function onScanSuccess(decodedText){
     if (scanLock) return;
